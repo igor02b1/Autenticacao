@@ -1,6 +1,7 @@
 ﻿using Autenticacao.Data;
 using Autenticacao.Dtos;
 using Autenticacao.Models;
+using BCrypt.Net;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Autenticacao.Controllers
@@ -27,6 +28,23 @@ namespace Autenticacao.Controllers
             _repository.Create(user);
 
             return Created("Sucess", _repository.Create(user));
+        }
+        [HttpPost("login")]
+        public IActionResult Login(LoginDto dto)
+        {
+            var user = _repository.GetByEmail(dto.Email);
+
+            if (user == null)
+            {
+                return BadRequest(new { messager = "credênciais inválidas." });
+            }
+
+            if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.Password))
+            {
+                return BadRequest(new { messager = "credênciais inválidas." });
+            }
+
+            return Ok(user);
         }
     }
 }
