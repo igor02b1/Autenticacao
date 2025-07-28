@@ -1,5 +1,6 @@
 ﻿using Autenticacao.Data;
 using Autenticacao.Dtos;
+using Autenticacao.Helpers;
 using Autenticacao.Models;
 using BCrypt.Net;
 using Microsoft.AspNetCore.Mvc;
@@ -10,9 +11,11 @@ namespace Autenticacao.Controllers
     public class AuthController : Controller
     {
         private readonly IUserRepository _repository;
-        public AuthController(IUserRepository repository)
+        private readonly JwtServices _jwtService;
+        public AuthController(IUserRepository repository, JwtServices jwtServices)
         {
             _repository = repository;
+            _jwtService = jwtServices;
         }
 
         [HttpPost("register")]
@@ -44,7 +47,17 @@ namespace Autenticacao.Controllers
                 return BadRequest(new { messager = "credênciais inválidas." });
             }
 
-            return Ok(user);
+            var jwt = _jwtService.Generate(user.Id);
+
+            Response.Cookies.Append("jwt", jwt, new CookieOptions
+            {
+                HttpOnly = true
+            });
+
+            return Ok(new
+            {
+                message = "Sucesso"
+            });
         }
     }
 }
